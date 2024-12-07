@@ -1,3 +1,23 @@
-fn main() {
-    println!("Hello, world!");
+use tokio;
+use reqwest;
+
+
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
+    let result = make_request("http://example.com").await?;
+    println!("Response: {}", result);
+    Ok(())
 }
+
+async fn make_request(url: &str) -> Result<String, reqwest::Error> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .send()
+        .await?;
+    
+    let body = response.text().await?;
+    Ok(body)
+}
+
+
