@@ -25,7 +25,14 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_make_request(){
-        make_request("http://example.com").await.expect("HTTP request failed");
+    async fn test_make_good_request(){
+        let result = make_request("http://example.com").await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_make_bad_request(){
+        let result = make_request("http://does-not-exist.com").await;
+        assert!(result.is_err());
     }
 }
