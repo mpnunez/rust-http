@@ -3,13 +3,14 @@ use reqwest;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-    let result = make_request("http://example.com").await?;
+    let client = reqwest::Client::new();
+    let result = make_request("http://example.com", &client).await?;
     println!("Response: {}", result);
     Ok(())
 }
 
-async fn make_request(url: &str) -> Result<String, reqwest::Error> {
-    let client = reqwest::Client::new();
+async fn make_request(url: &str, client: &reqwest::Client) -> Result<String, reqwest::Error> {
+
     let response = client
         .get(url)
         .send()
@@ -26,13 +27,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_make_good_request(){
-        let result = make_request("http://example.com").await;
+        let client = reqwest::Client::new();
+        let result = make_request("http://example.com", &client).await;
         assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_make_bad_request(){
-        let result = make_request("http://does-not-exist.com").await;
+        let client = reqwest::Client::new();
+        let result = make_request("http://does-not-exist.com", &client).await;
         assert!(result.is_err());
     }
 }
