@@ -1,7 +1,6 @@
 use tokio;
 use reqwest;
 
-
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
     let result = make_request("http://example.com").await?;
@@ -14,10 +13,19 @@ async fn make_request(url: &str) -> Result<String, reqwest::Error> {
     let response = client
         .get(url)
         .send()
-        .await?;
-    
+        .await?
+        .error_for_status()?;
+
     let body = response.text().await?;
     Ok(body)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[tokio::test]
+    async fn test_make_request(){
+        make_request("http://example.com").await.expect("HTTP request failed");
+    }
+}
