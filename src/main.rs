@@ -3,7 +3,7 @@ use reqwest::{Client,Response,Error};
 use async_trait::async_trait;
 
 #[async_trait]
-trait HttpGetter {
+trait HttpGetter {  // Need to mock this trait for unit tests
     async fn get_http_response(&self, url: &str) -> Result<Response, Error>;
 }
 
@@ -31,18 +31,22 @@ async fn make_request(url: &str, client: &impl HttpGetter) -> Result<String, Err
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::{rstest,fixture};
 
+    #[fixture]
+    pub fn client_for_test() -> Client {Client::new()}
+
+    #[rstest]
     #[tokio::test]
-    async fn test_make_good_request(){
-        let client = Client::new();
-        let result = make_request("http://example.com", &client).await;
+    async fn test_make_good_request(client_for_test: Client){
+        let result = make_request("http://example.com", &client_for_test).await;
         assert!(result.is_ok());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_make_bad_request(){
-        let client = Client::new();
-        let result = make_request("http://does-not-exist.com", &client).await;
+    async fn test_make_bad_request(client_for_test: Client){
+        let result = make_request("http://does-not-exist.com", &client_for_test).await;
         assert!(result.is_err());
     }
 }
