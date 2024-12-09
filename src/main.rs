@@ -1,8 +1,10 @@
 use tokio;
 use reqwest::{Client,Response,Error};
 use async_trait::async_trait;
+use mockall::automock;
 
 #[async_trait]
+#[automock]
 trait HttpGetter {  // Need to mock this trait for unit tests
     async fn get_http_response(&self, url: &str) -> Result<Response, Error>;
 }
