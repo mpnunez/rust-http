@@ -40,24 +40,24 @@ mod tests {
     use rstest::{rstest,fixture};
 
     #[fixture]
-    pub fn client_for_test() -> Client {
-        //let mock_client = MockHttpGetter();
-        let mock_client = Client::new();
+    pub fn client_for_test() -> impl HttpBodyGetter {
+        let mut mock_client = MockHttpBodyGetter::new();
+        mock_client.expect_get_http_response_body()
+            .returning(
+                |url| Ok("<!doctype html></html>".to_string())  // Should return html for example, non-html from 2nd example, error for everyting else
+            );
         return mock_client;
-        // Make this fixture return one mock client with the correct logic for 
-        // Make it mutable so that tests can say what they expect from it
     }
 
     #[rstest]
     #[tokio::test]
-    async fn test_make_good_request(/*client_for_test: Client*/){
-        let mut mock_client = MockHttpBodyGetter::new();
-        mock_client.expect_get_http_response_body()
-            .times(1)
-            .returning(|_| Ok("<!doctype html></html>".to_string()));
-        assert_eq!(mock_client.get_http_response_body("argument").await.unwrap(),"<!doctype html></html>");
-        //let result = make_request("http://example.com", &mock_client).await;
-        //assert!(result.is_ok());
+    async fn test_make_good_request(client_for_test: impl HttpBodyGetter){
+
+        //client_for_test.expect_get_http_response_body().times(1);
+
+        let result = client_for_test.get_http_response_body("http://example.com").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(),"<!doctype html></html>");
     }
 
     #[rstest]
