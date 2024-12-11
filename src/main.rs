@@ -1,18 +1,21 @@
 use tokio;
-use reqwest::{Client,Response,Error};
+use reqwest::{Client,Error};
 use async_trait::async_trait;
 use mockall::automock;
 
 #[async_trait]
 #[automock]
-trait HttpGetter {  // Need to mock this trait for unit tests
-    async fn get_http_response(&self, url: &str) -> Result<Response, Error>;
+trait HttpBodyGetter {  // Need to mock this trait for unit tests
+    async fn get_http_response_body(&self, url: &str) -> Result<String, Error>;
 }
 
 #[async_trait]
-impl HttpGetter for Client {
-    async fn get_http_response(&self, url: &str) -> Result<Response, Error> {
-        self.get(url).send().await
+impl HttpBodyGetter for Client {
+    async fn get_http_response_body(&self, url: &str) -> Result<String, Error> {
+        self.get(url)
+            .send().await?
+            .error_for_status()?
+            .text().await
     }
 }
 
@@ -24,9 +27,8 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn make_request(url: &str, client: &impl HttpGetter) -> Result<String, Error> {
-    let response = client.get_http_response(url).await?.error_for_status()?;
-    let body = response.text().await?;
+async fn make_request(url: &str, client: &impl HttpBodyGetter) -> Result<String, Error> {
+    let body = client.get_http_response_body(url).await?;
     Ok(body)
 }
 
@@ -36,7 +38,11 @@ mod tests {
     use rstest::{rstest,fixture};
 
     #[fixture]
-    pub fn client_for_test() -> Client {Client::new()}
+    pub fn client_for_test() -> Client {
+        //let mock_client = MockHttpGetter();
+        let mock_client = Client::new();
+        return mock_client;
+    }
 
     #[rstest]
     #[tokio::test]
