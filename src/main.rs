@@ -3,8 +3,9 @@ use reqwest::{Client,Error};
 use async_trait::async_trait;
 use mockall::automock;
 
+// Order of macros matters. See https://medium.com/vortechsa/mocking-in-async-rust-248b012c5e99
+#[cfg_attr(test, automock)]
 #[async_trait]
-#[automock]
 trait HttpBodyGetter {  // Need to mock this trait for unit tests
     async fn get_http_response_body(&self, url: &str) -> Result<String, Error>;
 }
@@ -47,6 +48,7 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_make_good_request(client_for_test: Client){
+        let mock_client = MockHttpBodyGetter::new().expect_get_http_response_body().returning(|_| Ok("<!doctype html></html>".to_string()));
         let result = make_request("http://example.com", &client_for_test).await;
         assert!(result.is_ok());
     }
