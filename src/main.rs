@@ -84,11 +84,18 @@ mod tests {
     #[tokio::test]
     async fn test_make_good_request(client_for_test: impl HttpBodyGetter){
 
-        //client_for_test.expect_get_http_response_body().times(1);
-
         let result = client_for_test.get_http_response_body("http://example.com").await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(),"<!doctype html></html>");
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_make_good_request2(client_for_test: impl HttpBodyGetter){
+
+        let result = client_for_test.get_http_response_body("https://ringsdb.com/api/public/card/01005").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(),"{name\":\"Legolas}");
     }
 
     #[rstest]
