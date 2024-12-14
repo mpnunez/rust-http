@@ -50,14 +50,14 @@ impl HttpBodyGetter for reqwest::Client {
 #[tokio::main]
 async fn main() -> Result<(), NetworkError> {
     let client = reqwest::Client::new();
-    let result = make_request("http://example.com", &client).await?;
+    let result = returns_html("http://example.com", &client).await?;
     println!("Response: {}", result);
     Ok(())
 }
 
-async fn make_request(url: &str, client: &impl HttpBodyGetter) -> Result<String, NetworkError> {
+async fn returns_html(url: &str, client: &impl HttpBodyGetter) -> Result<bool, NetworkError> {
     let body = client.get_http_response_body(url).await?;
-    Ok(body)
+    Ok(body.starts_with("<!doctype html>"))
 }
 
 #[cfg(test)]
@@ -82,26 +82,26 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn test_make_good_request(client_for_test: impl HttpBodyGetter){
+    async fn test_get_html(client_for_test: impl HttpBodyGetter){
 
-        let result = client_for_test.get_http_response_body("http://example.com").await;
+        let result = returns_html("http://example.com", &client_for_test).await;
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(),"<!doctype html></html>");
+        assert!(result.unwrap());
     }
 
     #[rstest]
     #[tokio::test]
-    async fn test_make_good_request2(client_for_test: impl HttpBodyGetter){
+    async fn test_get_non_html(client_for_test: impl HttpBodyGetter){
 
-        let result = client_for_test.get_http_response_body("https://ringsdb.com/api/public/card/01005").await;
+        let result = returns_html("https://ringsdb.com/api/public/card/01005", &client_for_test).await;
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(),"{name\":\"Legolas}");
+        assert!(!result.unwrap());
     }
 
     #[rstest]
     #[tokio::test]
-    async fn test_make_bad_request(client_for_test: impl HttpBodyGetter){
-        let result = make_request("http://does-not-exist.com", &client_for_test).await;
+    async fn test_bad_request(client_for_test: impl HttpBodyGetter){
+        let result = returns_html("http://does-not-exist.com", &client_for_test).await;
         assert!(result.is_err());
     }
 }
