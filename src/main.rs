@@ -44,7 +44,12 @@ mod tests {
         let mut mock_client = MockHttpBodyGetter::new();
         mock_client.expect_get_http_response_body()
             .returning(
-                |url| Ok("<!doctype html></html>".to_string())  // Should return html for example, non-html from 2nd example, error for everyting else
+                |url|
+                match url {
+                    "http://example.com" => Ok("<!doctype html></html>".to_string()),
+                    "https://ringsdb.com/api/public/card/01005" => Ok("{name\":\"Legolas}".to_string()),
+                    _ => Ok("reqwest error".to_string())
+                }
             );
         return mock_client;
     }
