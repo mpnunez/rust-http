@@ -6,8 +6,3 @@ edition = "2021"
 [dependencies]
 reqwest = { version = "0.11", features = ["blocking"] }
 tokio = { version = "1.0", features = ["full"] }
-async-trait = "*"
-
-[dev-dependencies]
-rstest = "0.23.0"
-mockall = "0.13.1"
