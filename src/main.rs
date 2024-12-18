@@ -1,10 +1,13 @@
 use tokio;
 use reqwest;
 use async_trait::async_trait;
+#[cfg(test)]
+use mockall::{automock, predicate::*};
 
 #[derive(Debug)]
 struct NetworkError;
 
+// Enables reqwest::Error to raise a NetworkError using the ? operator
 impl From<reqwest::Error> for NetworkError {
     fn from(e: reqwest::Error) -> NetworkError {
         println!("Application error: {e}");
@@ -12,6 +15,8 @@ impl From<reqwest::Error> for NetworkError {
     }
 }
 
+// Order of macros matters. See https://medium.com/vortechsa/mocking-in-async-rust-248b012c5e99
+#[cfg_attr(test, automock)]
 #[async_trait]
 trait HttpBodyGetter {
     async fn get_http_response_body(&self, url: &str) -> Result<String, NetworkError>;
@@ -27,11 +32,10 @@ impl HttpBodyGetter for reqwest::Client {
     }
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), NetworkError> {
     let client = reqwest::Client::new();
-    let result = returns_html("http://example2222.com", &client).await?;
+    let result = returns_html("http://example.com", &client).await?;
     println!("Response: {}", result);
     Ok(())
 }
@@ -48,7 +52,17 @@ mod tests {
 
     #[fixture]
     pub fn client_for_test() -> impl HttpBodyGetter {
-        reqwest::Client::new()
+        let mut mock_client = MockHttpBodyGetter::new();
+        mock_client.expect_get_http_response_body()
+            .returning(
+                |url|
+                match url {
+                    "http://example.com" => Ok("<!doctype html></html>".to_string()),
+                    "https://ringsdb.com/api/public/card/01005" => Ok("{name\":\"Legolas}".to_string()),
+                    _ => Err(NetworkError)
+                }
+            );
+        return mock_client;
     }
 
     #[rstest]
